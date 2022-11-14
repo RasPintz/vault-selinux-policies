@@ -37,7 +37,7 @@ $ make down
 
 ```bash
 $ terraform output
-$ ssh -i ~/.ssh/id_rsa ubuntu@ip
+$ ssh -i ~/.ssh/id_rsa centos@ip
 ```
 
 Sometimes the user-data.sh may take a while, you can check it's complete by running the following on the instance.

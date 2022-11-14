@@ -26,7 +26,7 @@ variable "name" {
 variable "pub_key_file" {
   description = "File location of the SSH pub key"
   type = string
-  default = "~/.ssh/id_ed25519.pub"
+  default = "~/.ssh/id_rsa.pub"
 }
 
 resource "aws_vpc" "vpc" {

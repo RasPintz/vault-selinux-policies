@@ -1,5 +1,13 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
+}
+
 provider "aws" {
-  version = "~> 2.32"
   region = var.region
 }
 
@@ -12,7 +20,7 @@ variable "region" {
 variable "name" {
   description = "Prefix name for stuff"
   type = string
-  default = "test"
+  default = "vault-selinux-test"
 }
 
 variable "pub_key_file" {

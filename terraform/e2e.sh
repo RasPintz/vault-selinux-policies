@@ -73,7 +73,7 @@ function get_instance_ip() {
     exit 1
   fi
 
-  tf_out=$(terraform output ${tfitem})
+  tf_out=$(terraform output ${tfitem} | sed 's/\"//g')
   if [[ $tf_out == "" ]]; then
     log_error "Can't find instance ip from TF, quitting..."
     exit 1

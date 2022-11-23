@@ -46,13 +46,30 @@ require {
 	type vault_sys_content_t;
 	type vault_log_t;
 	type kernel_t; # Needed for /dev/log
-        type init_t; # Needed for systemD to read vault.env
+    type init_t; # Needed for systemD to read vault.env
 	type unreserved_port_t;
 	class netlink_route_socket { bind create getattr nlmsg_read read write };
 	class tcp_socket { accept bind connect create getattr getopt listen setopt read write };
 	class unix_dgram_socket { bind create getattr setopt connect sendto };
 	class file { create getattr lock map open read write };
 	class dir { add_name create getattr open read write search };
+    #type=AVC msg=audit(11/23/2022 15:32:21.737:193) : avc:  denied  { open } for  pid=2078 comm=vault path=/etc/resolv.conf dev="dm-0" ino=6293839 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:net_conf_t:s0 tclass=file permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.737:193) : avc:  denied  { read } for  pid=2078 comm=vault name=resolv.conf dev="dm-0" ino=6293839 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:net_conf_t:s0 tclass=file permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.737:194) : avc:  denied  { getattr } for  pid=2078 comm=vault path=/etc/resolv.conf dev="dm-0" ino=6293839 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:net_conf_t:s0 tclass=file permissive=1 
+    type net_conf_t; # Needed for vault to access /etc/resolv.conf
+    #type=AVC msg=audit(11/23/2022 15:32:21.737:195) : avc:  denied  { name_connect } for  pid=2078 comm=vault dest=80 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:http_port_t:s0 tclass=tcp_socket permissive=1 
+    type http_port_t;
+    #type=AVC msg=audit(11/23/2022 15:32:21.755:201) : avc:  denied  { read } for  pid=2078 comm=vault name=certs dev="dm-0" ino=2097475 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=lnk_file permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.755:201) : avc:  denied  { search } for  pid=2078 comm=vault name=ssl dev="dm-0" ino=2097474 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=dir permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.755:202) : avc:  denied  { open } for  pid=2078 comm=vault path=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem dev="dm-0" ino=4216226 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=file permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.755:202) : avc:  denied  { read } for  pid=2078 comm=vault name=tls-ca-bundle.pem dev="dm-0" ino=4216226 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=file permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.755:203) : avc:  denied  { getattr } for  pid=2078 comm=vault path=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem dev="dm-0" ino=4216226 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=file permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.759:204) : avc:  denied  { open } for  pid=2078 comm=vault path=/etc/pki/tls/certs dev="dm-0" ino=179 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=dir permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.759:204) : avc:  denied  { read } for  pid=2078 comm=vault name=certs dev="dm-0" ino=179 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=dir permissive=1
+    type cert_t;
+    #type=AVC msg=audit(11/23/2022 15:32:21.915:205) : avc:  denied  { open } for  pid=2078 comm=vault path=/opt/vault/vault.hclic dev="dm-10" ino=133 scontext=system_u:system_r:vault_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=1 
+    #type=AVC msg=audit(11/23/2022 15:32:21.915:205) : avc:  denied  { read } for  pid=2078 comm=vault name=vault.hclic dev="dm-10" ino=133 scontext=system_u:system_r:vault_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=1
+    type user_home_t;
 }
 
 # read-write file permissions on anonymous pipes
@@ -142,6 +159,32 @@ kernel_read_system_state(vault_t)
 # Need to allow systemD access to read vault.env
 allow init_t vault_conf_t:file { read open };
 
+# Need to allow access to /etc/resolv.conf
+#type=AVC msg=audit(11/23/2022 15:32:21.737:193) : avc:  denied  { open } for  pid=2078 comm=vault path=/etc/resolv.conf dev="dm-0" ino=6293839 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:net_conf_t:s0 tclass=file permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.737:193) : avc:  denied  { read } for  pid=2078 comm=vault name=resolv.conf dev="dm-0" ino=6293839 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:net_conf_t:s0 tclass=file permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.737:194) : avc:  denied  { getattr } for  pid=2078 comm=vault path=/etc/resolv.conf dev="dm-0" ino=6293839 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:net_conf_t:s0 tclass=file permissive=1 
+allow vault_t net_conf_t:file { read open getattr };
+
+#type=AVC msg=audit(11/23/2022 15:32:21.737:195) : avc:  denied  { name_connect } for  pid=2078 comm=vault dest=80 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:http_port_t:s0 tclass=tcp_socket permissive=1 
+allow vault_t http_port_t:tcp_socket { name_connect };
+
+#type=AVC msg=audit(11/23/2022 15:32:21.755:201) : avc:  denied  { read } for  pid=2078 comm=vault name=certs dev="dm-0" ino=2097475 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=lnk_file permissive=1 
+allow vault_t cert_t:lnk_file  { read } ;
+#type=AVC msg=audit(11/23/2022 15:32:21.755:201) : avc:  denied  { search } for  pid=2078 comm=vault name=ssl dev="dm-0" ino=2097474 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=dir permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.759:204) : avc:  denied  { open } for  pid=2078 comm=vault path=/etc/pki/tls/certs dev="dm-0" ino=179 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=dir permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.759:204) : avc:  denied  { read } for  pid=2078 comm=vault name=certs dev="dm-0" ino=179 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=dir permissive=1
+allow vault_t cert_t:dir { search open read } ;
+#type=AVC msg=audit(11/23/2022 15:32:21.755:202) : avc:  denied  { open } for  pid=2078 comm=vault path=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem dev="dm-0" ino=4216226 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=file permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.755:202) : avc:  denied  { read } for  pid=2078 comm=vault name=tls-ca-bundle.pem dev="dm-0" ino=4216226 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=file permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.755:203) : avc:  denied  { getattr } for  pid=2078 comm=vault path=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem dev="dm-0" ino=4216226 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:object_r:cert_t:s0 tclass=file permissive=1 
+allow vault_t cert_t:file { open read getattr } ;
+
+#type=AVC msg=audit(11/23/2022 15:32:21.915:205) : avc:  denied  { open } for  pid=2078 comm=vault path=/opt/vault/vault.hclic dev="dm-10" ino=133 scontext=system_u:system_r:vault_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.915:205) : avc:  denied  { read } for  pid=2078 comm=vault name=vault.hclic dev="dm-10" ino=133 scontext=system_u:system_r:vault_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=1
+allow vault_t user_home_t:file { open read };
+
+
+
 # Need to access data files
 allow vault_t vault_sys_content_t:dir { add_name create getattr open read write search };
 allow vault_t vault_sys_content_t:file { create getattr lock map open read write };
@@ -159,7 +202,12 @@ logging_create_devlog_dev(vault_t)
 ## typically used to resolve DNS.
 ## </p>
 ## </desc>
-gen_tunable(vault_outbound_udp_dns, false)
+#type=AVC msg=audit(11/23/2022 15:32:21.737:196) : avc:  denied  { create } for  pid=2078 comm=vault scontext=system_u:system_r:vault_t:s0 tcontext=system_u:system_r:vault_t:s0 tclass=udp_socket permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.737:197) : avc:  denied  { create } for  pid=2078 comm=vault scontext=system_u:system_r:vault_t:s0 tcontext=system_u:system_r:vault_t:s0 tclass=udp_socket permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.737:198) : avc:  denied  { setopt } for  pid=2078 comm=vault scontext=system_u:system_r:vault_t:s0 tcontext=system_u:system_r:vault_t:s0 tclass=udp_socket permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.737:199) : avc:  denied  { connect } for  pid=2078 comm=vault scontext=system_u:system_r:vault_t:s0 tcontext=system_u:system_r:vault_t:s0 tclass=udp_socket permissive=1 
+#type=AVC msg=audit(11/23/2022 15:32:21.737:200) : avc:  denied  { getattr } for  pid=2078 comm=vault laddr=10.0.128.24 lport=48886 faddr=169.254.169.254 fport=53 scontext=system_u:system_r:vault_t:s0 tcontext=system_u:system_r:vault_t:s0 tclass=udp_socket permissive=1
+gen_tunable(vault_outbound_udp_dns, true)
 tunable_policy(`vault_outbound_udp_dns',`
   require {
     class udp_socket { connect create getattr read setopt write };
@@ -175,7 +223,7 @@ tunable_policy(`vault_outbound_udp_dns',`
 ## to external HTTP servers.
 ## </p>
 ## </desc>
-gen_tunable(vault_outbound_http, false)
+gen_tunable(vault_outbound_http, true)
 tunable_policy(`vault_outbound_http',`
   require {
     type vault_t;
